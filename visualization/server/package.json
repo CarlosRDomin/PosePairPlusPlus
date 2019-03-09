@@ -1,0 +1,23 @@
+{
+  "name": "posepair-visualization-server",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "babel-core": "^6.26.3",
+    "express": "^4.16.3",
+    "express-sse": "^0.5.0",
+    "fs": "0.0.2",
+    "grpc": "^1.19.0",
+    "@grpc/proto-loader": "^0.4.0",
+    "concurrently": "^4.1.0",
+    "axios": "^0.18.0"
+  },
+  "scripts": {
+    "start": "npm run server",
+    "start-mock": "concurrently \"npm run server\" \"npm run mock-watch-data\"",
+    "server": "node $NODE_DEBUG_OPTION server.js",
+    "mock-watch-data": "node $NODE_DEBUG_OPTION mock/mock-watch-data-sender.js",
+    "dev": "echo \"This command has been deprecated. Use 'npm start'\" && exit 1",
+    "lint": "eslint ."
+  }
+}

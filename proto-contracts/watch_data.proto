@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package posepair;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+
+service WatchDataReceiver {
+  // StreamWatchData implements the smartwatch (client) side of the sensor data streaming
+  rpc StreamWatchData(stream posepair.WatchDataBlock) returns (google.protobuf.Empty) {}
+}
+
+
+// WatchDataBlock encodes a block of sensor data from the watch, together with all relevant sensor attributes (watch ID, sampling freq, timestamp...)
+message WatchDataBlock {
+  int32 watch_id = 1;                       // Watch unique id (to tell them apart)
+  float F_samp = 2;                         // Frequency at which values were sampled
+  google.protobuf.Timestamp t_latest = 3;   // Timestamp of the last sample in linAccel
+  repeated float linAccel_x = 4;            // x-axis linear acceleration data
+  repeated float linAccel_y = 5;            // y-axis linear acceleration data
+  repeated float linAccel_z = 6;            // z-axis linear acceleration data
+}
