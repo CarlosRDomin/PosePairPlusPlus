@@ -7,7 +7,7 @@ const app = express();
 app.set("port", process.env.PORT || 3001);
 
 const sseWatchData = new SSE();
-const defaultWatchDataGrpcServerAddr = grpcConstants.SERVER_ADDR;
+const defaultWatchDataGrpcServerAddr = "0.0.0.0:" + grpcConstants.SERVER_PORT;
 
 const watchDataReceiver = new WatchDataReceiver({
   serverAddress: defaultWatchDataGrpcServerAddr,
