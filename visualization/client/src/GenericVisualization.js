@@ -215,7 +215,7 @@ Visualization.defaultProps = {
   }],
   plotConfig: {},
   extraControls: null,
-  fps: 5,
+  fps: 10,
   visType: "",
   scrollOnUpdate: false,
   SSEurl: "",

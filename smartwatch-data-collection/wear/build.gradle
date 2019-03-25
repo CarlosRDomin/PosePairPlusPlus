@@ -1,6 +1,9 @@
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.protobuf'
 
+def protocVersion = '3.7.0'
+def grpcVersion = '1.19.0'
+
 android {
     compileSdkVersion 28
     buildToolsVersion "28.0.3"
@@ -26,17 +29,15 @@ android {
 }
 
 protobuf {
-    protoc { artifact = 'com.google.protobuf:protoc:3.7.0' }
+    protoc { artifact = "com.google.protobuf:protoc:${protocVersion}" }
     plugins {
         javalite { artifact = "com.google.protobuf:protoc-gen-javalite:3.0.0" }
-        grpc { artifact = 'io.grpc:protoc-gen-grpc-java:1.19.0' // CURRENT_GRPC_VERSION
+        grpc { artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
         }
     }
     generateProtoTasks {
         all().each { task ->
-            task.builtins {
-                // In most cases you don't need the full Java output
-                // if you use the lite output.
+            task.builtins { // In most cases you don't need the full Java output if you use the lite output.
                 remove java
             }
             task.plugins {
@@ -61,9 +62,9 @@ dependencies {
 
     implementation 'com.google.protobuf:protobuf-lite:3.0.1'
     implementation 'com.google.api.grpc:googleapis-common-protos:0.0.3'
-    implementation 'io.grpc:grpc-okhttp:1.19.0' // CURRENT_GRPC_VERSION
-    implementation 'io.grpc:grpc-protobuf-lite:1.19.0' // CURRENT_GRPC_VERSION
-    implementation 'io.grpc:grpc-stub:1.19.0' // CURRENT_GRPC_VERSION
+    implementation "io.grpc:grpc-okhttp:${grpcVersion}"
+    implementation "io.grpc:grpc-protobuf-lite:${grpcVersion}"
+    implementation "io.grpc:grpc-stub:${grpcVersion}"
     implementation 'javax.annotation:javax.annotation-api:1.2'
 }
 
