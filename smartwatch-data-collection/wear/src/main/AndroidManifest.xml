@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="edu.cs4730.wearsensorsdemo">
+    package="cmu.posepair">
 
     <uses-feature android:name="android.hardware.type.watch" />
 
@@ -18,7 +18,7 @@
             android:required="false" />
 
         <activity
-            android:name=".MainActivity"
+            android:name="cmu.posepair.MainActivity"
             android:label="@string/app_name"
             android:theme="@android:style/Theme.DeviceDefault.Light">
             <intent-filter>

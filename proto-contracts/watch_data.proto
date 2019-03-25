@@ -2,7 +2,7 @@ syntax = "proto3";
 
 option java_multiple_files = true;
 //option optimize_for = LITE_RUNTIME;
-option java_package = "edu.cs4730.wearsensorsdemo.protos";
+option java_package = "cmu.posepair.protos";
 option java_outer_classname = "PosePairProto";
 option objc_class_prefix = "PPP";
 
