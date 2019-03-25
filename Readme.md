@@ -1,6 +1,15 @@
 # PosePair++
 This repo contains all the code pertaining the PosePair++ demo at IPSN'19.
 
+### Settings on the watch
+Different factors seem to affect watch performance, here's a list of settings that produce good results:
+ * Connectivity > Bluetooth: **Off**
+ * Developer options > Mobile battery saver: **Off**
+ * Display > Always-on screen: **Off**
+ * Gestures > Tilt-to-wake: **Off**
+ * Gestures > Touch-to-wake: **Off**
+ * Gestures > Wrist gestures: **Off**
+
 ### Visualization
 The visualization code is divided into two main components:
  * A Node.js+Express backend server (in folder `visualization/server`). This server is responsible for receiving and parsing gRPC packets containing raw sensor data (launches its own gRPC server). _Note_: for debugging purposes, we also include a mock gRPC client which sends random sensor data using the appropriate proto-contract data structures.
