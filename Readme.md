@@ -32,10 +32,10 @@ It is actually quite challenging to setup the environment for OpenPose to run on
 **IMPORTANT NOTE**: so far **this only works on Python 2.7** (Python 3 throws a `Segmentation fault` on `import caffe`) and **Mac OS X High Sierra or below (10.13.6-)**, since Nvidia hasn't released web drivers for Mojave yet.
 
 Instructions are divided into four main steps:
- - [Installing eGPU drivers + CUDA 10.1 + CuDNN 7.5](installing-eGPU-drivers-and-CUDA)
- - [Building PyTorch from source](building-PyTorch-from-source)
- - [Building Caffe (with GPU support) from source](building-Caffe-with-GPU-support-from-source)
- - [Building OpenPose with GPU support](building-OpenPose-with-GPU-support)
+ - [Installing eGPU drivers + CUDA 10.1 + CuDNN 7.5](#installing-eGPU-drivers-and-CUDA)
+ - [Building PyTorch from source](#building-PyTorch-from-source)
+ - [Building Caffe (with GPU support) from source](#building-Caffe-with-GPU-support-from-source)
+ - [Building OpenPose with GPU support](#building-OpenPose-with-GPU-support)
 
 #### Installing eGPU drivers and CUDA
  1. Install eGPU drivers by following [these instructions](https://github.com/learex/macOS-eGPU#step-by-step-guide):
