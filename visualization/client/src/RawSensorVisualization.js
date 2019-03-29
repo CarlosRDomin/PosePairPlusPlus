@@ -298,11 +298,12 @@ class RawSensorVisualization extends Component {
 
     // Save the remapped values
     this.setState({data: newData, layout: newLayout, sensorId_to_plotIdx_map: newDictionaryMap});
+    this.visualizationEl.forceReRender();
   };
 
   render() {
     return(
-      <Visualization SSEurl="watchData" visType="watchDataReceiver"
+      <Visualization SSEurl="sensorData" visType="sensorDataReceiver" ref={(el) => {this.visualizationEl = el;}}
         data={ this.state.data.map((plotData, plotIdx) => {
           const keys = Object.keys(plotData);
           const strKeys = keys.join(", ");
@@ -362,7 +363,7 @@ RawSensorVisualization.defaultProps = {
     xRangeInSec: 5,
     downloadAsCsv: false
   },
-  buffPlotLength: 5000, // How many data points we store for each sensor id
+  buffPlotLength: 3000, // How many data points we store for each sensor id
 };
 
 export default RawSensorVisualization;

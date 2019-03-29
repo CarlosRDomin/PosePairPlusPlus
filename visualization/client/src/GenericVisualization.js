@@ -50,7 +50,9 @@ class Visualization extends Component {
 
   shouldComponentUpdate(nextProps, nextState) {
     // If mouse is down (user is interacting, e.g. zooming) there's a bug on Plotly, so for now don't update until mouse is up
-    return !this.isMouseDown;
+
+    if (this.isMouseDown) return false;
+    return (this.props.fps<=0 || this.state.frameCounter.overallTicks !== nextState.frameCounter.overallTicks);
   }
 
   frameRateTick = () => {
@@ -85,6 +87,7 @@ class Visualization extends Component {
       this.props.updateTxtLog("SSE connection closed");
       console.log("SSE connection closed");
       this.msgIdOffset += this.lastMsgId; // Update msgIdOffset so no two plots have the same ID/key on SSE reconnection
+      this.forceReRender();
     };
 
     source.addEventListener('message', (e) => {
@@ -127,6 +130,8 @@ class Visualization extends Component {
         this.props.updateTxtLog("Successfully updated gRPC server address to " + res.data.config[this.props.visType].serverAddress + "!");
       }
     });
+
+    this.forceReRender();
   };
 
   scrollToBottom = () => {
@@ -160,6 +165,11 @@ class Visualization extends Component {
   clearPlots = () => {
     this.msgIdOffset = (this.state.isSSEconnected? -this.lastMsgId:0); // Reset the msgId counter
     this.props.clearPlots();  // And forward the call to props.clearPlots so the parent element can clear the plots via props.data
+    this.forceReRender();
+  };
+
+  forceReRender = () => {
+    this.setState({frameCounter: {...this.state.frameCounter, overallTicks: this.state.frameCounter.overallTicks+1}});
   };
 
   render() {
@@ -187,7 +197,7 @@ class Visualization extends Component {
                 <p>Graph for watch ID(s) {plotData.key} will go here</p>
                   :
                 <Fragment>
-                  <Plot revision={this.state.frameCounter[plotData.key] || 0}
+                  <Plot //revision={this.state.frameCounter[plotData.key] || 0}
                         data={plotData.plotData.map((lineData) => ({ ...this.props.style, ...lineData }))}
                         layout={{...this.props.layout[plotIdx], ...this.xLimsFromLatestData(plotIdx)}}
                         config={this.props.plotConfig}
