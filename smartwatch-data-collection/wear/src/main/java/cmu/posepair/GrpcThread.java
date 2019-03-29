@@ -6,7 +6,7 @@ import android.os.Message;
 import android.util.Log;
 
 import cmu.posepair.protos.WatchDataBlock;
-import cmu.posepair.protos.WatchDataReceiverGrpc;
+import cmu.posepair.protos.SensorDataReceiverGrpc;
 import com.google.protobuf.Empty;
 
 import io.grpc.ConnectivityState;
@@ -91,7 +91,7 @@ public class GrpcThread extends HandlerThread {
                             Log.d(TAG, "grpcChannel state is: " + grpcChannel.getState(false));
                         }
                     });
-                    requestStream = WatchDataReceiverGrpc.newStub(grpcChannel).streamWatchData(grpcEmptyStreamResponse);
+                    requestStream = SensorDataReceiverGrpc.newStub(grpcChannel).streamWatchData(grpcEmptyStreamResponse);
                     Log.i(TAG, "Connecting to gRPC server at " + serverAddr);
                     break;
                 case WATCH_DATA_MESSAGE:

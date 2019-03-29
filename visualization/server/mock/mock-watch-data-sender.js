@@ -11,7 +11,7 @@ const { SERVER_ADDR } = require("../lib/constants.js");
 
 /*
 	Class: MockWatchDataSender
-	Helper to start several gRPC clients sending mock watch data to the WatchDataReceiver service.
+	Helper to start several gRPC clients sending mock watch data to the SensorDataReceiver service.
  */
 class MockWatchDataSender {
   /*
@@ -32,11 +32,11 @@ class MockWatchDataSender {
     this._console = (args.console || console);
     this.serverAddress = (args.serverAddress || SERVER_ADDR);
     this.watch_ids = (args.watch_ids || [1]);
-    this.block_size = (args.block_size || 100);
-    this.F_samp = (args.F_samp || 1000);
+    this.block_size = (args.block_size || 10);
+    this.F_samp = (args.F_samp || 200);
     this.onServerError = args.onServerError;
 
-    this.WatchDataReceiverService = protoLoader.loadProto("watch_data").posepair.WatchDataReceiver;
+    this.SensorDataReceiverService = protoLoader.loadProto("sensor_data").posepair.SensorDataReceiver;
     this._console.log("MockWatchDataSender Initialized!");
   }
 
@@ -56,7 +56,7 @@ class MockWatchDataSender {
       try {
         this.mockWatchGrpcClients[i] = new GrpcClient({ serverAddress: this.serverAddress });
         this.mockWatchGrpcClients[i]._connect({
-          service: this.WatchDataReceiverService,
+          service: this.SensorDataReceiverService,
           method: "StreamWatchData",
           params: {},
           onStreamReceived: (sensorData) => {

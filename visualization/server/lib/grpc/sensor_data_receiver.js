@@ -10,14 +10,14 @@ const { SERVER_PORT } = require("../constants.js");
 //////////////////////////
 
 /*
-	Class: WatchDataReceiver
+	Class: SensorDataReceiver
 	Inherits from <GrpcServer>
-	Wrapper for gRPC server that is in charge of handling the WatchDataReceiver service.
+	Wrapper for gRPC server that is in charge of handling the SensorDataReceiver service.
  */
-class WatchDataReceiver extends GrpcServer {
+class SensorDataReceiver extends GrpcServer {
   /*
     Function: constructor
-    Initializes the WatchDataReceiver
+    Initializes the SensorDataReceiver
 
     Parameters:
     Args is a dictionary which contains:
@@ -31,8 +31,8 @@ class WatchDataReceiver extends GrpcServer {
     super(args);
     this.onSensorDataReceived = args.onSensorDataReceived;
 
-    const WatchDataReceiverService = protoLoader.loadProto("watch_data").posepair.WatchDataReceiver.service;
-    this.bindServerWithService(WatchDataReceiverService, {
+    const SensorDataReceiverService = protoLoader.loadProto("sensor_data").posepair.SensorDataReceiver.service;
+    this.bindServerWithService(SensorDataReceiverService, {
       StreamWatchData: (call)=> {
         this._console.log("Set up StreamWatchData");
         call.on('error', (err)=> this._console.log(err));
@@ -40,11 +40,11 @@ class WatchDataReceiver extends GrpcServer {
       }
     });
 
-    this._console.log("WatchDataReceiver Initialized!");
+    this._console.log("SensorDataReceiver Initialized!");
   }
 }
 
 /////////////
 // Exports //
 /////////////
-module.exports = WatchDataReceiver;
+module.exports = SensorDataReceiver;

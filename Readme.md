@@ -130,7 +130,7 @@ _Follow these instructions to build Caffe for Python 2. If you want to use Pytho
      ```
   9. Test Caffe:
      ```sh
-     pushd / && python -c "import caffe; print('SUCCESS! Caffe version {} installed'.format(caffe.__version__))" && popd
+     python -c "import caffe; print('SUCCESS! Caffe version {} installed'.format(caffe.__version__))"
      ```
 
 #### Building Caffe (with GPU support) from source - Python 3
