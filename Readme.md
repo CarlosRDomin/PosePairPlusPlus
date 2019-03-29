@@ -29,12 +29,11 @@ There are currently two options based on the source of the sensor data (commands
 ### Running OpenPose on GPU (Mac OS X instructions)
 It is actually quite challenging to setup the environment for OpenPose to run on external GPUs on Mac, but we finally figured out how!
 
-**IMPORTANT NOTE**: so far **this only works on Python 2.7** (Python 3 throws a `Segmentation fault` on `import caffe`) and **Mac OS X High Sierra or below (10.13.6-)**, since Nvidia hasn't released web drivers for Mojave yet.
+**IMPORTANT NOTE**: so far **this only works on Mac OS X High Sierra or below (10.13.6-)**, since Nvidia hasn't released web drivers for Mojave yet.
 
 Instructions are divided into four main steps:
  - [Installing eGPU drivers + CUDA 10.1 + CuDNN 7.5](#installing-eGPU-drivers-and-CUDA)
- - [Building PyTorch from source](#building-PyTorch-from-source)
- - [Building Caffe (with GPU support) from source](#building-Caffe-with-GPU-support-from-source)
+ - Building Caffe (with GPU support) from source, for [Python 2](#building-Caffe-with-GPU-support-from-source---Python-2) or [Python 3](#building-Caffe-with-GPU-support-from-source---Python-3)
  - [Building OpenPose with GPU support](#building-OpenPose-with-GPU-support)
 
 #### Installing eGPU drivers and CUDA
@@ -88,57 +87,24 @@ Instructions are divided into four main steps:
        ```sh
        echo -e '#include"cudnn.h"\n int main(){return 0;}' | nvcc -x c - -o /dev/null -I/usr/local/cuda/include -L/usr/local/cuda/lib -lcudnn
        ```
-       should not produce any error/output.
+       should not produce any error/output
 
-#### Building PyTorch from source
-In order to use CUDA, PyTorch has to be compiled from source. Follow these instructions:
- 1. Create a virtual environment:
-    ```sh
-    conda create -y -n posepair python=2
-    conda activate posepair
-    ```
- 2. Install dependencies:
-    ```sh
-    conda install -y numpy pyyaml setuptools cmake cffi mkl-include typing
-    pip install future
-    ```
- 3. Clone PyTorch:
-    ```sh
-    git clone --recursive https://github.com/pytorch/pytorch && cd pytorch
-    ```
-     - _Just in case, today's latest commit, which works, is: `git checkout ed8c462dc79461c434cdd69f378743d1258c624b`_
- 4. Specify cuDNN path:
-    ```sh
-    export CUDNN_INCLUDE_DIR=/usr/local/cuda/include
-    export CUDNN_LIB_DIR=/usr/local/cuda/lib
-    ```
- 5. Compile and install PyTorch:
-    ```sh
-    MACOSX_DEPLOYMENT_TARGET=10.13.6 CC=clang CXX=clang++ python setup.py install
-    ```
- 6. Test PyTorch:
-    ```sh
-    pushd / && python -c "import torch; print('SUCCESS! PyTorch version {} installed'.format(torch.__version__)); t=torch.rand(3); r=t.cuda(); print('Here\'s a random 1x3 Tensor: {}'.format(r))" && popd
-    ```
- 7. Last, install torchvision:
-    ```sh
-    conda install torchvision --no-deps -c pytorch
-    ```
-
-#### Building Caffe (with GPU support) from source
+#### Building Caffe (with GPU support) from source - Python 2
+_Follow these instructions to build Caffe for Python 2. If you want to use Python 3, skip to the [next section](#building-Caffe-with-GPU-support-from-source---Python-3)._
  1. Clone Caffe's repo:
     ```sh
     git clone https://github.com/CMU-Perceptual-Computing-Lab/caffe && cd caffe
     ```
  2. Modify the file `cmake/Dependencies.cmake`:
-    1. Comment out line 116 (the one that said `#if(NOT APPLE)`)
+    1. Comment out line 116 (the one that said `if(NOT APPLE)`)
     2. Delete the letters `else` from line 134 (so now it should say `if(APPLE)`)
  3. Create build dir:
     ```sh
     mkdir build && cd build
     ```
- 4. Activate your Python environment if you haven't done so:
+ 4. Create a virtual environment and activate it (we suggest using [Miniconda](https://docs.conda.io/en/latest/miniconda.html)):
     ```sh
+    conda create -y -n posepair python=2
     conda activate posepair
     ```
  5. Install dependencies:
@@ -152,49 +118,146 @@ In order to use CUDA, PyTorch has to be compiled from source. Follow these instr
       - (if `error: use of undeclared identifier 'CV_LOAD_IMAGE_COLOR'` is thrown when making Caffe on step 7 below) -> Apply https://github.com/BVLC/caffe/pull/6638 patch (offers OpenCV 4 compatibility)
  6. Configure project:
     ```sh
-    cmake -Dpython_version=2 -DBLAS=MKL -DCMAKE_CXX_FLAGS="-std=c++11" -DCMAKE_PREFIX_PATH="/Library/Developer/CommandLineTools/usr/bin;${CONDA_PREFIX}" -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} ..
+    cmake -Dpython_version=2 -DBLAS=MKL -DCMAKE_PREFIX_PATH="/Library/Developer/CommandLineTools/usr/bin;${CONDA_PREFIX}" -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} ..
     ```
  7. Make Caffe:
     ```sh
-    make -j8 && make install
+    make -j8 install
     ```
  8. Avoid having to set `PYTHONPATH` every time by symlinking:
      ```sh
-     python -c "import site; import os; caffe_path='$CONDA_PREFIX/python/caffe'; os.chdir(caffe_path); print(os.symlink('_caffe.dylib', '_caffe.so') is None if not os.path.exists('_caffe.so') else '_caffe.so already exists, nothing to do'); site_pkgs=site.getsitepackages()[0]; os.chdir(site_pkgs); print(os.symlink(os.path.relpath(caffe_path, site_pkgs), 'caffe') is None if not os.path.exists('caffe') else 'caffe already symlinked to site-packages, nothing to do'); print('Symlinks done :)');"
+     python -c "import site; import os; caffe_path='${CONDA_PREFIX}/python/caffe'; os.chdir(caffe_path); print(os.symlink('_caffe.dylib', '_caffe.so') is None if not os.path.exists('_caffe.so') else '_caffe.so already exists, nothing to do'); site_pkgs=site.getsitepackages()[0]; os.chdir(site_pkgs); print(os.symlink(os.path.relpath(caffe_path, site_pkgs), 'caffe') is None if not os.path.exists('caffe') else 'caffe already symlinked to site-packages, nothing to do'); print('Symlinks done :)');"
      ```
   9. Test Caffe:
      ```sh
      pushd / && python -c "import caffe; print('SUCCESS! Caffe version {} installed'.format(caffe.__version__))" && popd
      ```
 
+#### Building Caffe (with GPU support) from source - Python 3
+_Follow these instructions to build Caffe for Python 3. If you want to use Python 2, check out the [previous section](#building-Caffe-with-GPU-support-from-source---Python-2) and skip this one._
+
+For some reason I struggle to run `python -c "import caffe"` without getting a "beautiful" `Segmentation fault` on Python 3 + Miniconda. Not sure whether this is an issue with conda's version of some dependency, but here's the instructions I followed to compile the latest Caffe **with GPU support on Mac** (thanks to Homebrew).
+  1. Clone Caffe's repo:
+     ```sh
+     git clone https://github.com/CMU-Perceptual-Computing-Lab/caffe && cd caffe
+     ```
+  2. Modify line 116 of file `cmake/Dependencies.cmake` from `if(NOT APPLE)` to `if(TRUE)`
+  3. Install [Homebrew](https://brew.sh/):
+     ```sh
+     /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+     ```
+  4. Install dependencies:
+     ```sh
+     brew install cmake numpy opencv openblas protobuf boost boost-python3 glog gflags hdf5 lmdb leveldb
+     ```
+      - Make sure `python3` points to Homebrew's Python 3:
+        ```sh
+        ls -l `which python3`
+        ```
+        should print something like `/usr/local/bin/python3 -> ../Cellar/python/3.7.3/bin/python3`.
+      - If that's not the case:
+        ```sh
+        export PATH="/usr/local/opt/python/libexec/bin:$PATH"
+        ```
+  5. Create a virtual environment (replace `</path/to/new/virtualenv>` by the actual path where you'd like to create the virtualenv, e.g. `~/virtualenvs/posepair`) and activate it:
+     ```sh
+     python3 -m venv </path/to/new/virtualenv>
+     source </path/to/new/virtualenv>/bin/activate
+     ```
+  6. Install python dependencies:
+     ```sh
+     pip install numpy protobuf scikit-image opencv-python
+     ```
+  7. Create build dir:
+     ```sh
+     mkdir build && cd build
+     ```
+  8. Configure project:
+     ```sh
+     cmake -Dpython_version=3 -DBLAS=Open -DCMAKE_PREFIX_PATH="/usr/local/Cellar/openblas/0.3.5" -DCMAKE_INSTALL_PREFIX=${VIRTUAL_ENV} ..
+     ```
+      - If you get an error saying that `The dependency target "pycaffe" of target "pytest" does not exist` caused by `-- Could NOT find Boost`, modify the file `cmake/Dependencies.cmake` (again):
+        - In lines 157 and 164 replace `"python-py${boost_py_version}"` by `"python${boost_py_version}"`
+        - In lines 158 and 165 replace `${Boost_PYTHON-PY${boost_py_version}_FOUND}` by `${Boost_PYTHON${boost_py_version}_FOUND}`
+  9. Make Caffe:
+     ```sh
+     make -j8 install
+     ```
+     - (if `error: use of undeclared identifier 'CV_LOAD_IMAGE_COLOR'` is thrown) -> Apply https://github.com/BVLC/caffe/pull/6638 patch (offers OpenCV 4 compatibility)
+  10. Avoid having to set `PYTHONPATH` every time by symlinking:
+      ```sh
+      python -c "import site; import os; caffe_path='${VIRTUAL_ENV}/python/caffe'; os.chdir(caffe_path); print(os.symlink('_caffe.dylib', '_caffe.so') is None if not os.path.exists('_caffe.so') else '_caffe.so already exists, nothing to do'); site_pkgs=site.getsitepackages()[0]; os.chdir(site_pkgs); print(os.symlink(os.path.relpath(caffe_path, site_pkgs), 'caffe') is None if not os.path.exists('caffe') else 'caffe already symlinked to site-packages, nothing to do'); print('Symlinks done :)');"
+      ```
+  11. Test Caffe:
+      ```sh
+      python -c "import caffe; print('SUCCESS! Caffe version {} installed'.format(caffe.__version__))"
+      ```
+
 #### Building OpenPose with GPU support
  1. Clone OpenPose's repo:
     ```sh
     git clone https://github.com/CMU-Perceptual-Computing-Lab/openpose.git && cd openpose
     ```
- 2. Comment out line 305 (the one that said `op_detect_darwin_version(OSX_VERSION)`) of file `cmake/Cuda.cmake`
+ 2. Comment out line 327 (the one that said `op_detect_darwin_version(OSX_VERSION)`) of file `cmake/Cuda.cmake`
  3. Create build dir:
     ```sh
     mkdir build && cd build
     ```
- 4. Activate your Python environment if you haven't done so:
+ 4. Activate your Python environment if you haven't done so, and define a custom env variable `PYTHON_ROOT` so the rest of the steps are the same for both Python versions:
+    - Python 2 with conda:
+      ```sh
+      conda activate posepair
+      export PYTHON_ROOT=$CONDA_PREFIX
+      ```
+    - Python 3 with venv:
+      ```sh
+      source </path/to/new/virtualenv>/bin/activate
+      export PYTHON_ROOT=$VIRTUAL_ENV
+      ```
+ 5. Configure project (if you don't have it installed, you might need to [install Doxygen](https://sourceforge.net/projects/doxygen/files/latest/download) first):
     ```sh
-    conda activate posepair
+    cmake -DCaffe_INCLUDE_DIRS=${PYTHON_ROOT}/include -DCaffe_LIBS=${PYTHON_ROOT}/lib/libcaffe.dylib -DBUILD_CAFFE=OFF -DBUILD_PYTHON=ON -DBUILD_DOCS=ON -DCPU_ONLY=OFF -DGPU_MODE=CUDA -DCUDA_USE_STATIC_CUDA_RUNTIME=OFF -DDOWNLOAD_BODY_25_MODEL=ON -DDOWNLOAD_FACE_MODEL=ON -DDOWNLOAD_HAND_MODEL=ON -DWITH_OPENCV_WITH_OPENGL=ON -DCMAKE_PREFIX_PATH="/Library/Developer/CommandLineTools/usr/bin;${PYTHON_ROOT}" -DCMAKE_INSTALL_PREFIX=${PYTHON_ROOT} ..
     ```
- 5. Configure project:
-    ```sh
-    cmake -DCaffe_INCLUDE_DIRS=${CONDA_PREFIX}/include -DCaffe_LIBS=${CONDA_PREFIX}/lib/libcaffe.dylib -DBUILD_CAFFE=OFF -DBUILD_PYTHON=ON -DBUILD_DOCS=ON -DCPU_ONLY=OFF -DGPU_MODE=CUDA -DCUDA_USE_STATIC_CUDA_RUNTIME=OFF -DDOWNLOAD_BODY_25_MODEL=ON -DDOWNLOAD_FACE_MODEL=ON -DDOWNLOAD_HAND_MODEL=ON -DWITH_OPENCV_WITH_OPENGL=ON -DCMAKE_PREFIX_PATH="/Library/Developer/CommandLineTools/usr/bin;${CONDA_PREFIX}" -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} ..
-    ```
-    - If you don't have it installed, you might need to [install Doxygen](https://sourceforge.net/projects/doxygen/files/latest/download) first
  6. Make OpenPose:
     ```sh
-    make -j8 && make install
+    make -j8 install
     ```
  7. Avoid having to set `PYTHONPATH` every time by symlinking (assumes you are still inside the build folder of openpose):
     ```sh
-    python -c "import site; import os; openpose_path='$CONDA_PREFIX/python/openpose'; models_path=os.path.join(openpose_path, 'models'); print(os.symlink(os.path.abspath('../models'), models_path) is None if not os.path.exists(models_path) else 'Models already symlinked, nothing to do'); site_pkgs=site.getsitepackages()[0]; os.chdir(site_pkgs); print(os.symlink(os.path.relpath(openpose_path, site_pkgs), 'openpose') is None if not os.path.exists('openpose') else 'openpose already symlinked to site-packages, nothing to do'); print('Symlinks done :)');"
+    python -c "import site; import os; openpose_path='$PYTHON_ROOT/python/openpose'; models_path=os.path.join(openpose_path, 'models'); print(os.symlink(os.path.abspath('../models'), models_path) is None if not os.path.exists(models_path) else 'Models already symlinked, nothing to do'); site_pkgs=site.getsitepackages()[0]; os.chdir(site_pkgs); print(os.symlink(os.path.relpath(openpose_path, site_pkgs), 'openpose') is None if not os.path.exists('openpose') else 'openpose already symlinked to site-packages, nothing to do'); print('Symlinks done :)');"
     ```
  8. Test it:
     ```sh
     pushd examples/tutorial_api_python && python openpose_python.py && popd
+    ```
+
+### Building PyTorch from source
+Finally, in order to use PyTorch with CUDA, it has to be compiled from source. Follow these instructions:
+ 1. Clone PyTorch:
+    ```sh
+    git clone --recursive https://github.com/pytorch/pytorch && cd pytorch
+    ```
+     - _Just in case, today's latest commit, which works, is: `git checkout 12abc8a99a5fc60603b3aecf5faa37600ad4fff6`_
+ 2. Install dependencies:
+    - Python 2 with conda:
+      ```sh
+      conda activate posepair
+      conda install -y numpy pyyaml setuptools cmake cffi mkl-include typing
+      conda install torchvision --no-deps -c pytorch
+      pip install future
+      ```
+    - Python 3 with venv:
+      ```sh
+      source </path/to/new/virtualenv>/bin/activate
+      pip install pyyaml torchvision
+      ```
+ 3. Compile and install PyTorch (go grab a coffe, it might take almost an hour...):
+    ```sh
+    export CUDNN_INCLUDE_DIR=/usr/local/cuda/include
+    export CUDNN_LIB_DIR=/usr/local/cuda/lib
+    MACOSX_DEPLOYMENT_TARGET=10.13.6 CC=clang CXX=clang++ python setup.py install
+    ```
+ 4. Test PyTorch:
+    ```sh
+    pushd / && python -c "import torch; print('SUCCESS! PyTorch version {} installed'.format(torch.__version__)); t=torch.rand(3); r=t.cuda(); print('Here\'s a random 1x3 Tensor: {}'.format(r))" && popd
     ```
