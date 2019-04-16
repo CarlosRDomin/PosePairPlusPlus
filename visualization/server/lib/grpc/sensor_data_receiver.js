@@ -30,6 +30,7 @@ class SensorDataReceiver extends GrpcServer {
     args.serverAddress = (args.serverAddress || "0.0.0.0:"+SERVER_PORT); // Use default address if not provided
     super(args);
     this.onSensorDataReceived = args.onSensorDataReceived;
+    this.onHumanPoseReceived = args.onHumanPoseReceived;
 
     const SensorDataReceiverService = protoLoader.loadProto("sensor_data").posepair.SensorDataReceiver.service;
     this.bindServerWithService(SensorDataReceiverService, {
@@ -37,6 +38,11 @@ class SensorDataReceiver extends GrpcServer {
         this._console.log("Set up StreamWatchData");
         call.on('error', (err)=> this._console.log(err));
         call.on('data', this.onSensorDataReceived);
+      },
+      StreamHumanPose: (call)=> {
+        this._console.log("Set up StreamHumanPose");
+        call.on('error', (err)=> this._console.log(err));
+        call.on('data', this.onHumanPoseReceived);
       }
     });
 

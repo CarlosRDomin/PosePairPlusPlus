@@ -12,8 +12,12 @@ const defaultSensorDataGrpcServerAddr = "0.0.0.0:" + grpcConstants.SERVER_PORT;
 const sensorDataReceiver = new SensorDataReceiver({
   serverAddress: defaultSensorDataGrpcServerAddr,
   onSensorDataReceived: (sensorData)=> {
-    //console.log("Received data from watch #" + sensorData.watch_id + "!");
+    //console.log("Received data from watch " + sensorData.watch_id + "!");
     sseSensorData.send(sensorData);
+  },
+  onHumanPoseReceived: (humanPose)=> {
+    // console.log("Received data from person #" + humanPose.person_id + "!");
+    sseSensorData.send(humanPose);
   }
 });
 sensorDataReceiver.start();

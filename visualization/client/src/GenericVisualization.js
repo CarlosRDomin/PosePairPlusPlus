@@ -181,7 +181,7 @@ class Visualization extends Component {
               <input type="text" ref={(el) => {this.grpcAddrRef = el;}} style={{flex: 1}} />
               <button style={{fontFamily: 'Lucida Sans Unicode', margin: '0 5px'}} onClick={this.reconnectToGrpcAddr} disabled>&#8635;</button>
             </div><div style={{flex: 1}}>
-              <button onClick={this.state.isSSEconnected? this.closeSSE:this.startSSE}>{this.state.isSSEconnected? 'Close connection':'(Re)connect'}</button>
+              <button onClick={this.state.isSSEconnected? this.closeSSE:this.startSSE}>{(this.state.isSSEconnected? 'Pause plot':'(Re)start plot')+(this.props.data.length===1? '':'s')}</button>
             </div><div style={{flex: 1}}>
               <button onClick={this.clearPlots}>Clear plot{this.props.data.length>1? 's':''}</button>
             </div>

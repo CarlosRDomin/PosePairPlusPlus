@@ -2,6 +2,7 @@ import React, {Component} from "react";
 import _set from "lodash.set";
 import CircularBuffer from "./lib/CircularBuffer";
 import Visualization from "./GenericVisualization";
+import {Joints} from "./lib/constants";
 
 // Extra controls for RawSensorVisualization (xlims, ylims, download data, etc.)
 class RawSensorExtraControls extends Component {
@@ -71,30 +72,35 @@ class RawSensorVisualization extends Component {
   }
 
   updateGraph = (sensor_data) => {
-    const N_dims = 3, block_size = sensor_data.linAccel_x.length;
+    const is_watch = (sensor_data.person_id === undefined);
+    const N_dims = (is_watch? 3:2);
+    const id = sensor_data[is_watch? "watch_id":"person_id"];
+    const t = sensor_data[is_watch? "t_latest":"t"];
+    const block_size = (is_watch? sensor_data.linAccel_x.length:1);
 
     // Keep a reference to the buffers allocated to this watch_id (allocate new ones if necessary)
-    let plotIdx = this.state.sensorId_to_plotIdx_map[sensor_data.watch_id];  // Get the index in this.state.data where sensorId's data is stored
+    let plotIdx = this.state.sensorId_to_plotIdx_map[id];  // Get the index in this.state.data where sensorId's data is stored
     if (plotIdx === null) return; // Null indicates "ignore this watchID"
-    const isNewSensorId = (plotIdx === undefined || this.state.data[plotIdx][sensor_data.watch_id] === undefined);
+    const isNewSensorId = (plotIdx === undefined || this.state.data[plotIdx][id] === undefined);
 
     let buffsXY = [];
     if (!isNewSensorId) { // If buffers were already allocated, use them (will append data to them below)
-      buffsXY = this.state.data[plotIdx][sensor_data.watch_id];
+      buffsXY = this.state.data[plotIdx][id];
     } else {  // Otherwise, allocate and initialize buffers
       for (let i=0; i<N_dims; i++) {
         buffsXY.push({
           x: new CircularBuffer(this.props.buffPlotLength, Array),
-          y: new CircularBuffer(this.props.buffPlotLength, Float32Array)
+          y: new CircularBuffer(this.props.buffPlotLength, Float32Array),
+          title: (is_watch? 'Watch ':'Person #') + id + ' [' + String.fromCharCode('x'.charCodeAt(0) + i) + ']'
         });
       }
     }
 
     // Compute x-axis values (compute Date for each datapoint)
-    const T_samp_millis = 1000/sensor_data.F_samp;
+    const T_samp_millis = 1000/(is_watch? sensor_data.F_samp:13);
     let tLatest = Date.now(); // Default value in case t_latest is not specified
-    if (sensor_data.t_latest && (sensor_data.t_latest.seconds || sensor_data.t_latest.nanos)) {
-      tLatest = sensor_data.t_latest.seconds.low*1000 + sensor_data.t_latest.nanos/1000000;
+    if (t && (t.seconds.low || t.nanos)) {
+      tLatest = t.seconds.low*1000 + t.nanos/1000000;
     } else if (buffsXY[0].x.at(-1) !== undefined) {  // If t_latest isn't specified but there's a valid time at the end of the xAxis
       tLatest = buffsXY[0].x.at(-1).getTime() + block_size*T_samp_millis; // Compute tLatest as an offset from the last time recorded
     }
@@ -104,7 +110,12 @@ class RawSensorVisualization extends Component {
     // Fill in the buffers
     for (let i=0; i<N_dims; i++) {
       buffsXY[i].x.push(xData);
-      buffsXY[i].y.push(sensor_data['linAccel_' + (String.fromCharCode('x'.charCodeAt()+i))]);
+      let letter = String.fromCharCode('x'.charCodeAt(0) + i);
+      if (is_watch) {
+        buffsXY[i].y.push(sensor_data['linAccel_' + letter]);
+      } else {
+        buffsXY[i].y.push([sensor_data['pos_' + letter][Joints.LEYE]]);  // rWrist=4; lWrist=7
+      }
     }
 
     // Append buffers to state if we hadn't received data from this sensor yet
@@ -121,14 +132,14 @@ class RawSensorVisualization extends Component {
       }
 
       // Update data, map and plot titles
-      data[plotIdx][sensor_data.watch_id] = buffsXY; // Save a reference to the newly allocated buffers
-      map[sensor_data.watch_id] = plotIdx; // And store the mapping watch_id <-> plotIdx
+      data[plotIdx][id] = buffsXY; // Save a reference to the newly allocated buffers
+      map[id] = plotIdx; // And store the mapping watch_id <-> plotIdx
       layout[plotIdx].title = this.computePlotTitle(Object.keys(data[plotIdx]));
 
       // And save the new state
       this.setState({data: data, layout: layout, sensorId_to_plotIdx_map: map});
       this.requestSensorIDtoPlotIDmap.value = data.map((plotData) => {
-        let sensorIDs = Object.keys(plotData);
+        let sensorIDs = Object.keys(plotData).map((key)=> (isNaN(parseInt(key))? '"' + key + '"' : key));
         return (sensorIDs.length>1)? ('[' + sensorIDs + ']') : sensorIDs;
       });
     }
@@ -314,7 +325,7 @@ class RawSensorVisualization extends Component {
                 ...sensorDataRow, // Include the properties in sensorDataRow, such as `visible`
                 x: sensorDataRow.x.values(),
                 y: sensorDataRow.y.values(),
-                name: "Watch #" + watch_id + " [" + (rowIdx + 1) + "]",
+                name: sensorDataRow.title,
                 key: watch_id + "." + rowIdx
               });
             })
@@ -348,8 +359,8 @@ RawSensorVisualization.defaultProps = {
     width: 1
   },
   layout: {
-    width: 700,
-    height: 350,
+    width: 1000, //700,
+    height: 600, //350,
     margin: {
       l: 40,
       r: 10,
@@ -358,12 +369,12 @@ RawSensorVisualization.defaultProps = {
       pad: 4
     },
     showlegend: true,
-    legend: {orientation: 'h', x:0, y:1.16},
+    legend: {orientation: 'h', x:0, y:1.08, font: {size: 15}},
     title: 'Raw signal visualization',
     xRangeInSec: 5,
     downloadAsCsv: false
   },
-  buffPlotLength: 3000, // How many data points we store for each sensor id
+  buffPlotLength: 1000, // How many data points we store for each sensor id
 };
 
 export default RawSensorVisualization;
